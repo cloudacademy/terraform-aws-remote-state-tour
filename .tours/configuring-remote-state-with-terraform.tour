@@ -1,0 +1,19 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "Configuring Remote State with Terraform",
+  "steps": [
+    {
+      "directory": "ec2",
+      "description": "Intro"
+    },
+    {
+      "file": "ec2/main.tf",
+      "description": "This Terraform project will deploy the following AWS resources:\n\n- **Amazon VPC**\n- **Amazon VPC Subnet**\n- **Amazon EC2 Instance**\n\nYou will not be updating resource configurations in this lab. Instead, you will focus on the `terraform` configuration defined at the top of this **main.tf** file. ",
+      "line": 16
+    },
+    {
+      "directory": "ec2",
+      "description": "The following resources will be used to set up a remote state for this Terraform project:\n\n- **Amazon S3 Bucket**: The `terraform.tfstate` file used to define the Terraform state will be stored in an S3 bucket. The state stored in this S3 bucket can be accessed by multiple developers and ensures that the state file is in a centralized location.\n- **Amazon DynamoDB Table**: Multiple developers accessing the remote state file at the same time can lead to unintentional changes being made or overridden. The DynamoDB table that you deploy in this lab will be used to lock the state file, restricting changes to be made to the file while it's in use. More on this in the upcoming steps."
+    }
+  ]
+}
