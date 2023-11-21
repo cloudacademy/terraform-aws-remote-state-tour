@@ -30,7 +30,7 @@
     },
     {
       "directory": "ec2",
-      "description": "Enable versioning on your S3 bucket with the following command:\n\n```\naws s3api put-bucket-versioning \\\n    --bucket $S3NAME \\\n    --versioning-configuration Status=Enabled\n```\n\nVersioning allows multiple versions of the state file to be saved which provides rollback safety for the state.",
+      "description": "Enable versioning on your S3 bucket with the following command:\n\n>> aws s3api put-bucket-versioning --bucket $S3NAME --versioning-configuration Status=Enabled\n\nVersioning allows multiple versions of the state file to be saved which provides rollback safety for the state.",
       "title": "Versioning"
     },
     {
@@ -47,17 +47,7 @@
       "file": "ec2/main.tf",
       "description": "Click **Insert Code** to configure the remote state using the S3 bucket backend you created:\n\n```js\n  backend \"s3\" {\n    bucket = \"REPLACE\"\n    key    = \"calabs/terraform.tfstate\"\n    region = \"us-west-2\"\n    dynamodb_table = \"terraform-state-lock\"\n    encrypt        = true\n  }\n```",
       "line": 9,
-      "title": "Backend",
-      "selection": {
-        "start": {
-          "line": 6,
-          "character": 15
-        },
-        "end": {
-          "line": 6,
-          "character": 53
-        }
-      }
+      "title": "Backend"
     },
     {
       "file": "ec2/main.tf",
