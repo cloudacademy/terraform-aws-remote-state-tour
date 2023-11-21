@@ -4,16 +4,100 @@
   "steps": [
     {
       "directory": "ec2",
-      "description": "Intro"
+      "description": "Terraform remote state is configured when the project is initialized. During this process, Terraform looks for a backend configuration in the project directory and uses it to configure Terraform to use a remote state configuration.\n\nYou will create the AWS resources used by Terraform to store and lock your remote state file. ",
+      "title": "Introduction"
     },
     {
       "file": "ec2/main.tf",
-      "description": "This Terraform project will deploy the following AWS resources:\n\n- **Amazon VPC**\n- **Amazon VPC Subnet**\n- **Amazon EC2 Instance**\n\nYou will not be updating resource configurations in this lab. Instead, you will focus on the `terraform` configuration defined at the top of this **main.tf** file. ",
-      "line": 16
+      "description": "This Terraform project will deploy the following AWS resources:\n\n- **Amazon VPC**\n- **Amazon VPC Subnet**\n- **Amazon EC2 Instance**\n\nYou will not be updating resource configurations in this lab. Instead, you will focus on the Terraform `backend` configuration defined at the top of this **main.tf** file. ",
+      "line": 1,
+      "title": "Resources"
     },
     {
       "directory": "ec2",
-      "description": "The following resources will be used to set up a remote state for this Terraform project:\n\n- **Amazon S3 Bucket**: The `terraform.tfstate` file used to define the Terraform state will be stored in an S3 bucket. The state stored in this S3 bucket can be accessed by multiple developers and ensures that the state file is in a centralized location.\n- **Amazon DynamoDB Table**: Multiple developers accessing the remote state file at the same time can lead to unintentional changes being made or overridden. The DynamoDB table that you deploy in this lab will be used to lock the state file, restricting changes to be made to the file while it's in use. More on this in the upcoming steps."
+      "description": "The following resources will be used to set up a remote state for this Terraform project:\n\n**Amazon S3 Bucket**\n\nThe `terraform.tfstate` file used to define the Terraform state will be stored in an S3 bucket. The state stored in this S3 bucket can be accessed by multiple developers and ensures that the state file is in a centralized location.\n\n**Amazon DynamoDB Table**\n\nMultiple developers accessing the remote state file at the same time can lead to unintentional changes being made or overridden. The DynamoDB table that you deploy in this lab will be used to lock the state file, restricting changes to be made to the file while it's in use. More on this in the upcoming steps.",
+      "title": "State Resources"
+    },
+    {
+      "directory": "ec2",
+      "description": "Click the following command to run it in a new terminal window:\n\n>> S3NAME=\"terraformstate-$(date | md5sum | head -c 8)\" \n\nThe command above will generate and store a unique S3 bucket name.\n\nRun the following command in the terminal window to create an Amazon S3 bucket in the US West 2 (Oregon) region:\n\n>> aws s3api create-bucket --bucket $S3NAME --region us-west-2 --create-bucket-configuration LocationConstraint=us-west-2\n\nClick **Next** to continue.",
+      "title": "S3 Bucket"
+    },
+    {
+      "directory": "ec2",
+      "description": "Click the following command to configure encryption on the S3 bucket:\n\n>> aws s3api put-bucket-encryption --bucket $S3NAME --server-side-encryption-configuration={\\\"Rules\\\":[{\\\"ApplyServerSideEncryptionByDefault\\\":{\\\"SSEAlgorithm\\\":\\\"AES256\\\"}}]}\n\nThe state file contains sensitive data to the infrastructure managed by it. It is important to enable server-side encryption on the S3 bucket. \n\nThis lab uses AES256 however, it is recommended to use KMS and implement key rotations. ",
+      "title": "Bucket Encryption"
+    },
+    {
+      "directory": "ec2",
+      "description": "Enable versioning on your S3 bucket with the following command:\n\n```\naws s3api put-bucket-versioning \\\n    --bucket $S3NAME \\\n    --versioning-configuration Status=Enabled\n```\n\nVersioning allows multiple versions of the state file to be saved which provides rollback safety for the state.",
+      "title": "Versioning"
+    },
+    {
+      "directory": "ec2",
+      "description": "Storing the state remotely is great for centralized storage, however, there is a risk of multiple users working on the state file at the same time. \n\nMultiple users with access to the same state file at once can lead to work being overridden or the state file being corrupted.\n\n State locking is a feature that prevents that state from being opened when it is in use. A DynamoDB table is used by Terraform to set and unset the state locks."
+    },
+    {
+      "directory": "ec2",
+      "description": "Run the following command to create an Amazon DynamoDB table:\n\n>> aws dynamodb create-table --table-name terraform-state-lock --attribute-definitions AttributeName=LockID,AttributeType=S --key-schema AttributeName=LockID,KeyType=HASH --region us-west-2 --provisioned-throughput ReadCapacityUnits=20,WriteCapacityUnits=20\n\nThis table will use the `LockID` primary key to store a \"lock\" item. This key name will follow a pattern of `bucket name/path`. More on these values in the next step.\n\nA DynamoDB table can be used to lock multiple remote state files.\n\nThe AWS infrastructure is in place to initialize remote state in a Terraform configuration.",
+      "title": "DynamoDB Table"
+    },
+    {
+      "file": "ec2/main.tf",
+      "description": "Click **Insert Code** to configure the remote state using the S3 bucket backend you created:\n\n```js\n  backend \"s3\" {\n    bucket = \"REPLACE\"\n    key    = \"calabs/terraform.tfstate\"\n    region = \"us-west-2\"\n    dynamodb_table = \"terraform-state-lock\"\n    encrypt        = true\n  }\n```",
+      "line": 15,
+      "title": "Backend",
+      "selection": {
+        "start": {
+          "line": 6,
+          "character": 15
+        },
+        "end": {
+          "line": 6,
+          "character": 53
+        }
+      }
+    },
+    {
+      "file": "ec2/main.tf",
+      "description": "Retrieve the unique S3 bucket name from the terminal output and replace the `REPLACE` placeholder on the current line.\n\nBe sure to maintain the quotation marks around the `bucket` value.\n\nExample: `bucket = \"terraformstate-4099692b\"`",
+      "line": 10,
+      "title": "Bucket Name"
+    },
+    {
+      "file": "ec2/main.tf",
+      "description": "The `backend` block refers to how Terraform manages the state file.\n\n- `bucket`: S3 bucket data store location\n- `key`: The S3 object key of the remote Terraform state file\n- `region`: The region the S3 bucket exists in\n- `dynamodb_table`: The DynamoDB table to reference during the Terraform `apply` process. This table is used to determine whether the state file is currently in use.\n- `encrypt`: Set to `true` if you wish to encrypt your Terraform state file. An optional setting, but highly recommended.",
+      "line": 15,
+      "selection": {
+        "start": {
+          "line": 4,
+          "character": 14
+        },
+        "end": {
+          "line": 4,
+          "character": 23
+        }
+      }
+    },
+    {
+      "directory": "ec2",
+      "description": "Initialize your Terraform project by running the following command:\n\n>> cd ec2 && terraform init\n\nThe S3 bucket and DynamoDB table you created earlier are initialized in this step to store remote state. \n\nTo update the remote state configurations, you can rerun the `terraform init` command after updating your settings.",
+      "title": "Init"
+    },
+    {
+      "directory": "ec2",
+      "description": "Apply your changes by running the following command:\n\n>> terraform apply --auto-approve\n\nDuring this process, the state file is locked. The DynamoDb table holds the lock status of the file, so if another developer were to attempt a deployment at the same time, they would receive a lock error.\n\nAlso, you will notice there is no `terraform.tfstate` file generated locally. You must access the S3 bucket to view the state file.",
+      "title": "Apply"
+    },
+    {
+      "directory": "ec2",
+      "description": "The following command will list any files in the remote state bucket that are along the preconfigured state file path:\n\n>> aws s3 ls s3://$S3NAME/calabs/\n\nIn this case, the `/calabs/terraform.tfstate` file will be output to the terminal.",
+      "title": "Remote State File"
+    },
+    {
+      "directory": "ec2",
+      "description": "The key takeaways to remember:\n\n- Remote state allows you to share infrastructure resources in a read-only way with other developers on your team\n- State files can be locked to prevent concurrent Terraform deployments against the same state and to avoid state file corruption\n\nYou have successfully configured a remote state in your Terraform project. Return to the Cloud Academy Lab browser tab to complete the lab.",
+      "title": "Complete"
     }
   ]
 }
