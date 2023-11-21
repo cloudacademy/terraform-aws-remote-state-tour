@@ -35,7 +35,8 @@
     },
     {
       "directory": "ec2",
-      "description": "Storing the state remotely is great for centralized storage, however, there is a risk of multiple users working on the state file at the same time. \n\nMultiple users with access to the same state file at once can lead to work being overridden or the state file being corrupted.\n\n State locking is a feature that prevents that state from being opened when it is in use. A DynamoDB table is used by Terraform to set and unset the state locks."
+      "description": "Storing the state remotely is great for centralized storage, however, there is a risk of multiple users working on the state file at the same time. \n\nMultiple users with access to the same state file at once can lead to work being overridden or the state file being corrupted.\n\n State locking is a feature that prevents that state from being opened when it is in use. A DynamoDB table is used by Terraform to set and unset the state locks.",
+      "title": "Remote State"
     },
     {
       "directory": "ec2",
@@ -77,7 +78,8 @@
           "line": 4,
           "character": 23
         }
-      }
+      },
+      "title": "Backend Attributes"
     },
     {
       "directory": "ec2",
