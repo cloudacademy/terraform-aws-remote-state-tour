@@ -14,7 +14,7 @@ variable "ami_ids" {
   type        = map(any)
   description = "AMI ID's to deploy"
   default = {
-    linux   = "ami-0d398eb3480cb04e7"
+    linux   = "ami-0688ba7eeeeefe3cd"
     windows = "ami-0afb7a78e89642197"
   }
 }
